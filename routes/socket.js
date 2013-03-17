@@ -61,4 +61,14 @@ module.exports = function (socket) {
     fn();
     checkMatches();
   });
+
+  // clean up if someone disconnects before being matched
+  socket.on('disconnect', function () {
+    if (riders[socket.id]) {
+      delete riders[socket.id];
+    }
+    if (drivers[socket.id]) {
+      delete drivers[socket.id];
+    }
+  });
 };
