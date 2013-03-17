@@ -4,8 +4,13 @@
 
 var _ = require('lodash');
 
+// map key(trip) -> { trip }
 var riders = {};
 var drivers = {};
+
+// map socket.id -> [ {trip} , {trip} , ... ]
+var trips = {};
+
 
 var canHitchRide = require('../lib/can-hitch-ride');
 
@@ -38,28 +43,61 @@ var checkMatches = function () {
 
 };
 
+
+var addTrip = function (trip) {
+  if (!trips[trip.socket.id]) {
+    trips[trip.socket.id] = [];
+  }
+  trips[trip.socket.id].push(trip);
+};
+
+var key = function (trip) {
+  return trip.from.toString() + ':' +
+    trip.to.toString() + ':' +
+    trip.socket.id;
+};
+
+
 module.exports = function (socket) {
 
   socket.on('send:rider:trip', function (data, fn) {
     console.log(data);
-    riders[socket.id] = {
+    var newTrip = {
       socket: socket,
       from: data.from,
       to: data.to
     };
+
+    riders[key(newTrip)] = newTrip;
+    addTrip(newTrip);
+
     fn();
     checkMatches();
   });
 
   socket.on('send:driver:trip', function (data, fn) {
     console.log(data);
-    drivers[socket.id] = {
+    var newTrip = {
       socket: socket,
       from: data.from,
       to: data.to
     };
+
+    drivers[key(newTrip)] = newTrip;
+    addTrip(newTrip);
+    
     fn();
     checkMatches();
+  });
+
+  socket.on('get:trips', function (data, fn) {
+    var myTrips = trips[socket.id] || [];
+    fn(myTrips.map(function (trip) {
+      return {
+        from: trip.from,
+        to: trip.to
+      };
+    }));
   });
 
   // clean up if someone disconnects before being matched
