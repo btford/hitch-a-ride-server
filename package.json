@@ -1,7 +1,7 @@
 {
   "name": "hitch-a-ride-server",
   "url": "https://github.com/btford/hitch-a-ride-server",
-  "version": "0.0.0",
+  "version": "0.0.0-3",
   "dependencies": {
     "hitch-a-ride-client": "git://github.com/btford/hitch-a-ride-client.git",
     "express": "~3.1.0",
@@ -13,5 +13,12 @@
   },
   "devDependencies": {},
   "private": true,
-  "license": "MIT"
+  "license": "MIT",
+  "subdomain": "har",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "engines": {
+    "node": "0.8.x"
+  }
 }
