@@ -25,6 +25,12 @@ var checkMatches = function () {
 
   _.each(drivers, function (driver) {
     _.each(riders, function (rider) {
+
+      // a person cannot give themself a ride
+      if (driver.socket.id === rider.socket.id) {
+        return;
+      }
+
       canHitchRide({
         driver: driver,
         rider: rider
