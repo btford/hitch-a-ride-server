@@ -33,8 +33,8 @@ var checkMatches = function () {
           delete drivers[key(driver)];
           delete riders[key(rider)];
 
-          driver.socket.emit('trip:matched');
-          rider.socket.emit('trip:matched');
+          driver.socket.emit('trip:matched', 1);
+          rider.socket.emit('trip:matched', 1);
 
           console.log('matched!');
         } else {
