@@ -14,6 +14,12 @@ var trips = {};
 
 var canHitchRide = require('../lib/can-hitch-ride');
 
+var key = function (trip) {
+  return trip.from.toString() + ':' +
+    trip.to.toString() + ':' +
+    trip.socket.id;
+};
+
 var checkMatches = function () {
 
   _.each(drivers, function (driver) {
@@ -21,14 +27,11 @@ var checkMatches = function () {
       canHitchRide({
         driver: driver,
         rider: rider
-      }, function (canHitch) {
-        console.log(driver.from, rider.from);
-        if (canHitch &&
-            drivers[driver.socket.id] &&
-            riders[rider.socket.id]) {
+      }, function (canHitch, route) {
+        if (canHitch) {
 
-          delete drivers[driver.socket.id];
-          delete riders[rider.socket.id];
+          delete drivers[key(driver)];
+          delete riders[key(rider)];
 
           driver.socket.emit('trip:matched');
           rider.socket.emit('trip:matched');
@@ -51,12 +54,6 @@ var addTrip = function (trip) {
   trips[trip.socket.id].push(trip);
 };
 
-var key = function (trip) {
-  return trip.from.toString() + ':' +
-    trip.to.toString() + ':' +
-    trip.socket.id;
-};
-
 
 module.exports = function (socket) {
 
@@ -65,7 +62,8 @@ module.exports = function (socket) {
     var newTrip = {
       socket: socket,
       from: data.from,
-      to: data.to
+      to: data.to,
+      type: 'ride'
     };
 
     riders[key(newTrip)] = newTrip;
@@ -80,7 +78,8 @@ module.exports = function (socket) {
     var newTrip = {
       socket: socket,
       from: data.from,
-      to: data.to
+      to: data.to,
+      type: 'drive'
     };
 
     drivers[key(newTrip)] = newTrip;
@@ -95,18 +94,25 @@ module.exports = function (socket) {
     fn(myTrips.map(function (trip) {
       return {
         from: trip.from,
-        to: trip.to
+        to: trip.to,
+        type: trip.type
       };
     }));
   });
 
   // clean up if someone disconnects before being matched
   socket.on('disconnect', function () {
-    if (riders[socket.id]) {
-      delete riders[socket.id];
-    }
-    if (drivers[socket.id]) {
-      delete drivers[socket.id];
+    if (trips[socket.id]) {
+      trips[socket.id].forEach(function (trip) {
+        if (drivers[key(trip)]) {
+          delete drivers[key(trip)];
+        }
+        if (riders[key(trip)]) {
+          delete riders[key(trip)];
+        }
+      });
+
+      delete trips[socket.id];
     }
   });
 };
