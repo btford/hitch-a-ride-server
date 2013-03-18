@@ -39,8 +39,9 @@ var checkMatches = function () {
 
 
           driver.match = rider;
-          driver.route = data.routes[0];
           rider.match = driver;
+          driver.route = data.routes[0];
+          rider.route = data.routes[0];
 
           console.log('matched!');
         } else {
