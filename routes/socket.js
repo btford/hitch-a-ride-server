@@ -4,6 +4,7 @@
 
 var _ = require('lodash');
 
+// map of unmatched trips
 // map key(trip) -> { trip }
 var riders = {};
 var drivers = {};
@@ -27,14 +28,19 @@ var checkMatches = function () {
       canHitchRide({
         driver: driver,
         rider: rider
-      }, function (canHitch, route) {
+      }, function (canHitch, data) {
         if (canHitch) {
 
           delete drivers[key(driver)];
           delete riders[key(rider)];
 
-          driver.socket.emit('trip:matched', 1);
-          rider.socket.emit('trip:matched', 1);
+          driver.socket.emit('trip:matched');
+          rider.socket.emit('trip:matched');
+
+
+          driver.match = rider;
+          driver.route = data.routes[0];
+          rider.match = driver;
 
           console.log('matched!');
         } else {
@@ -58,7 +64,6 @@ var addTrip = function (trip) {
 module.exports = function (socket) {
 
   socket.on('send:rider:trip', function (data, fn) {
-    console.log(data);
     var newTrip = {
       socket: socket,
       from: data.from,
@@ -74,7 +79,6 @@ module.exports = function (socket) {
   });
 
   socket.on('send:driver:trip', function (data, fn) {
-    console.log(data);
     var newTrip = {
       socket: socket,
       from: data.from,
@@ -84,7 +88,7 @@ module.exports = function (socket) {
 
     drivers[key(newTrip)] = newTrip;
     addTrip(newTrip);
-    
+
     fn();
     checkMatches();
   });
@@ -98,6 +102,32 @@ module.exports = function (socket) {
         type: trip.type
       };
     }));
+  });
+
+  socket.on('get:trip:info', function (data, fn) {
+    var trip = _.find(trips[socket.id], function (trip) {
+      return trip.from === data.from &&
+        trip.to === data.to &&
+        trip.type === data.type;
+    });
+
+    if (trip) {
+      var serialized = {
+        from: trip.from,
+        to: trip.to,
+        type: trip.type,
+        route: trip.route
+      };
+
+      if (trip.match) {
+        serialized.match = trip.match.socket.id;
+      }
+
+      fn(serialized);
+    } else {
+      fn(false);
+    }
+
   });
 
   // clean up if someone disconnects before being matched
