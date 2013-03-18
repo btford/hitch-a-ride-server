@@ -1,7 +1,7 @@
 {
   "name": "hitch-a-ride-server",
   "url": "https://github.com/btford/hitch-a-ride-server",
-  "version": "0.0.0-3",
+  "version": "0.0.0-5",
   "dependencies": {
     "hitch-a-ride-client": "git://github.com/btford/hitch-a-ride-client.git",
     "express": "~3.1.0",
