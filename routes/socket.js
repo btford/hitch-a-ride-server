@@ -9,7 +9,7 @@ var _ = require('lodash');
 var riders = {};
 var drivers = {};
 
-// map socket.id -> [ {trip} , {trip} , ... ]
+// map id(socket) -> [ {trip} , {trip} , ... ]
 var trips = {};
 
 
@@ -18,7 +18,7 @@ var canHitchRide = require('../lib/can-hitch-ride');
 var key = function (trip) {
   return trip.from.toString() + ':' +
     trip.to.toString() + ':' +
-    trip.socket.id;
+    id(trip.socket);
 };
 
 var checkMatches = function () {
@@ -27,7 +27,7 @@ var checkMatches = function () {
     _.each(riders, function (rider) {
 
       // a person cannot give themself a ride
-      if (driver.socket.id === rider.socket.id) {
+      if (id(driver.socket) === id(rider.socket)) {
         return;
       }
 
@@ -61,14 +61,19 @@ var checkMatches = function () {
 
 
 var addTrip = function (trip) {
-  if (!trips[trip.socket.id]) {
-    trips[trip.socket.id] = [];
+  if (!trips[id(trip.socket)]) {
+    trips[id(trip.socket)] = [];
   }
-  trips[trip.socket.id].push(trip);
+  trips[id(trip.socket)].push(trip);
 };
 
+var id = function (socket) {
+  return socket.sessionId;
+};
 
 module.exports = function (socket) {
+  socket.session = socket.handshake.session;
+  socket.sessionId = socket.handshake.sessionId;
 
   socket.on('send:rider:trip', function (data, fn) {
     var newTrip = {
@@ -101,7 +106,7 @@ module.exports = function (socket) {
   });
 
   socket.on('get:trips', function (data, fn) {
-    var myTrips = trips[socket.id] || [];
+    var myTrips = trips[id(socket)] || [];
     fn(myTrips.map(function (trip) {
       return {
         from: trip.from,
@@ -112,7 +117,7 @@ module.exports = function (socket) {
   });
 
   socket.on('get:trip:info', function (data, fn) {
-    var trip = _.find(trips[socket.id], function (trip) {
+    var trip = _.find(trips[id(socket)], function (trip) {
       return trip.from === data.from &&
         trip.to === data.to &&
         trip.type === data.type;
@@ -127,7 +132,7 @@ module.exports = function (socket) {
       };
 
       if (trip.match) {
-        serialized.match = trip.match.socket.id;
+        serialized.match = id(trip.match.socket);
       }
 
       fn(serialized);
@@ -138,6 +143,7 @@ module.exports = function (socket) {
   });
 
   // clean up if someone disconnects before being matched
+  /*
   socket.on('disconnect', function () {
     if (trips[socket.id]) {
       trips[socket.id].forEach(function (trip) {
@@ -152,4 +158,5 @@ module.exports = function (socket) {
       delete trips[socket.id];
     }
   });
+  */
 };

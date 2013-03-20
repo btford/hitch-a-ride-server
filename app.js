@@ -10,8 +10,30 @@ var express = require('express'),
 var app = module.exports = express();
 var server = require('http').createServer(app);
 
+// Session
+var secret = 'a';
+var cookieParser = express.cookieParser(secret);
+var sessionStore = new express.session.MemoryStore();
+
 // Hook Socket.io into Express
 var io = require('socket.io').listen(server);
+io.set('authorization', function(data, accept) {
+  cookieParser(data, {}, function(err) {
+    if (err) {
+      accept(err, false);
+    } else {
+      sessionStore.get(data.signedCookies['express.sid'], function(err, session) {
+        if (err || !session) {
+          accept('Session error', false);
+        } else {
+          data.session = session;
+          data.sessionId = data.signedCookies['express.sid'];
+          accept(null, true);
+        }
+      });
+    }
+  });
+});
 
 // Configuration
 
@@ -20,6 +42,14 @@ app.configure(function(){
   app.set('view engine', 'jade');
   app.use(express.bodyParser());
   app.use(express.methodOverride());
+
+  app.use(cookieParser);
+  app.use(express.session({
+    store: sessionStore,
+    secret: secret,
+    key: 'express.sid'
+  }));
+
   app.use(express.static(__dirname + '/public'));
 
   // serve the web app
