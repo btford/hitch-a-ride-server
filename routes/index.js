@@ -5,7 +5,7 @@
 var fs = require('fs');
 
 exports.index = function(req, res){
-  res.render('index');
+  res.render('index.jade');
 };
 
 exports.appIndex = function (req, res) {
@@ -19,6 +19,6 @@ exports.appIndex = function (req, res) {
 };
 
 exports.partials = function (req, res) {
-  var name = req.params.name;
-  res.render('partials/' + name);
+    var name = req.params.name;
+    res.render('partials/' + name + '.jade');
 };
