@@ -35,14 +35,39 @@ io.set('authorization', function(data, accept) {
   });
 });
 
+var passport = require('passport'),
+    GoogleStrategy = require('passport-google').Strategy;
+
+passport.serializeUser(function(user,done) {
+  done(null, user);
+});
+
+passport.deserializeUser(function(obj,done) {
+  done(null, obj);
+});
+passport.use(new GoogleStrategy ({
+  returnURL: 'http://localhost:3000/auth/google/return',
+  realm: 'http://localhost:3000/'
+},
+function(identifier, profile, done) {
+  process.nextTick(function() {
+    profile.identifier = identifier;
+    return done(null, profile);
+  });
+}));
+
 // Configuration
 
 app.configure(function(){
   app.set('views', __dirname + '/views');
   app.set('view engine', 'jade');
+  //app.engine('.html', require('jade').__express);
+  //app.set('view engine', 'html');
   app.use(express.bodyParser());
   app.use(express.methodOverride());
 
+  app.use(passport.initialize());
+  app.use(passport.session());
   app.use(cookieParser);
   app.use(express.session({
     store: sessionStore,
@@ -70,12 +95,29 @@ app.configure('production', function(){
   app.use(express.errorHandler());
 });
 
+function ensureAuth(req, res, next){
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.redirect('/auth/google');
+}
 // Routes
-
 app.get('/', routes.index);
-app.get('/app/*', routes.appIndex);
-app.get('/partials/:name', routes.partials);
-
+/*app.get('/app', function(req, res){
+  res.render(__dirname + '/node_modules/hitch-a-ride-client/app/index.html');     
+});*/
+app.get('/app/*', ensureAuth, routes.appIndex);
+app.get('/partials/:name', ensureAuth, routes.partials);
+app.get('/auth/google',
+  passport.authenticate('google', { failureRedirect: '/'}),
+  function(req, res) {
+    res.redirect('/app');
+  });
+app.get('/auth/google/return',
+  passport.authenticate('google', {failureRedirect: '/'}),
+  function(req, res){
+    res.redirect('/app');
+  });
 // redirect all others to the index (HTML5 history)
 app.get('*', routes.index);
 
