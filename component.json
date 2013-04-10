@@ -1,0 +1,12 @@
+{
+  "name": "hitch-a-ride-server",
+  "version": "0.0.0",
+  "dependencies": {
+    "btford/hitch-a-ride-style": "~0.0.0"
+  },
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "components"
+  ]
+}

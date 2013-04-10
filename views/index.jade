@@ -1,6 +1,33 @@
 extends layout
 
 block body
-  h1 Hitch-a-Ride
-  p
-    a(href='/app/') Go to the app!
+
+  .jumbotron
+    .container
+      h1 Hitch-A-Ride
+      p Taglines are hard to write.
+      a.btn.btn-primary.btn-large(href='/app/') Go to the app!
+
+  .container
+    h1 How does it work?
+    .row-fluid
+      .span6
+        h2 Driver
+        hr
+        h3 1. Add your info
+        p Brian is planning to drive across the state for a family reunion this weekend.
+        p TODO: cute picture
+      .span6
+        h2 Rider
+        hr
+        h3 1. Add your info
+        p Jon is going to a neighboring town this weekend for his friend's Birthday party.
+        p TODO: cute picture
+
+  .container
+    h1 For near and far
+    p Whether you're going across town or across the country
+
+  .container
+    h1 Personal
+    p Riders and drivers are matched up and stuff...
