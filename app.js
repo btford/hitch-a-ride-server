@@ -52,6 +52,11 @@ app.configure(function(){
 
   app.use(express.static(__dirname + '/public'));
 
+  // serve shared styles
+  ['img', 'styles'].forEach(function (path) {
+    app.use('/' + path, express.static(__dirname + '/components/hitch-a-ride-style/' + path));
+  });
+
   // serve the web app
   app.use('/app', express.static(__dirname + '/node_modules/hitch-a-ride-client/app'));
   app.use(app.router);
