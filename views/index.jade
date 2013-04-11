@@ -5,29 +5,69 @@ block body
   .jumbotron
     .container
       h1 Hitch-A-Ride
-      p Taglines are hard to write.
-      a.btn.btn-primary.btn-large(href='/app/') Go to the app!
+      p Carpooling, but more awesome. Awesomepooling.
+      p
+        a.btn.btn-danger.btn-large(href='/app/') For the Web
+        | 
+        a.btn.btn-success.btn-large(href='/app/') For Android
 
   .container
-    h1 How does it work?
-    .row-fluid
-      .span6
-        h2 Driver
-        hr
-        h3 1. Add your info
-        p Brian is planning to drive across the state for a family reunion this weekend.
-        p TODO: cute picture
-      .span6
-        h2 Rider
-        hr
-        h3 1. Add your info
-        p Jon is going to a neighboring town this weekend for his friend's Birthday party.
-        p TODO: cute picture
+
+    h1.intro How Does it Work?
+
+    .well
+      .row-fluid
+        .span12
+          h2 1. Plan a trip
+      .row-fluid
+        .span6
+          h3 Driver
+          p Brian is planning to drive across the state for a family reunion this weekend.
+          p TODO: cute picture
+        .span6
+          h3 Rider
+          p Jon is going to a neighboring town this weekend for his friend's Birthday party.
+          p TODO: cute picture
+
+    .well
+      .row-fluid
+        .span12
+          h2 2. Hitch-A-Ride matches you up
+          p based on where you are, and convenience for the driver.
+          p TODO: google map screenshot showing "how" it matches
+
+    .well
+      .row-fluid
+        .span12
+          h2 3. Get updates, meet up
+          p Hitch-A-Ride will let the rider know when the driver is close, and the driver can send updates.
+
+    .well
+      .row-fluid
+        .span12
+          h2 4. Go!
+          p The driver takes it from here.
 
   .container
-    h1 For near and far
-    p Whether you're going across town or across the country
+    h1.intro Near and Far
+    .well
+      p Works great whether you're going across town or across the country
 
   .container
-    h1 Personal
-    p Riders and drivers are matched up and stuff...
+    h1.intro Social
+    .well
+      .row-fluid
+        .span4
+          h2 Invite your friends
+        .span4
+          h2 Make New Ones
+          p Save your favorite drivers or passengers.
+            | We're all friends here.
+        .span4
+          h2 Organize a Car-pool
+          p Set trips to repeat daily, weekly, or whatever.
+            | Great for commuters.
+
+  .container
+    .well
+      small Copyright 2013 Brian Ford, Jon Budzenski, and Madi Sergazin
