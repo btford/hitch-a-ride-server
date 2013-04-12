@@ -106,8 +106,8 @@ app.get('/', routes.index);
 /*app.get('/app', function(req, res){
   res.render(__dirname + '/node_modules/hitch-a-ride-client/app/index.html');     
 });*/
-app.get('/app/*', ensureAuth, routes.appIndex);
-app.get('/partials/:name', ensureAuth, routes.partials);
+app.get('/app/*', routes.appIndex);
+app.get('/partials/:name', routes.partials);
 app.get('/auth/google',
   passport.authenticate('google', { failureRedirect: '/'}),
   function(req, res) {
