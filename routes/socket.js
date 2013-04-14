@@ -9,14 +9,39 @@ var _ = require('lodash');
 var riders = {};
 var drivers = {};
 
-// map id(socket) -> [ {trip} , {trip} , ... ]
+
+
+// map accountId -> [ {trip} , {trip} , ... ]
 var trips = {};
 
-// google account id -> account data (reliability, etc.)
-var accounts = {};
 
-// account -> socket
+
+// accountId -> account data (reliability, etc.)
+var profiles = {};
+
+// a profile looks like this:
+// {
+//    notifications: [
+//      {what: 'rider canceled for trip', trip: 'some-id'},
+//      {what: 'trip matched for', trip: 'some-id'}
+//    ]
+// }
+//
+
+var newProfile = function (data) {
+  
+  data.notifications = [];
+
+  // TODO: query google for name, profile pic, phone number, etc.
+
+  return data;
+};
+
+
+// Account id -> socket
 var sockets = {};
+
+
 
 var crypto = require('crypto');
 var sha1 = function (str) {
@@ -31,7 +56,7 @@ var reverseGeocode = require('../lib/google-maps').reverseGeocode;
 var key = function (trip) {
   return sha1(trip.from.toString() + ':' +
     trip.to.toString() + ':' +
-    id(trip.socket));
+    trip.accountId);
 };
 
 var checkMatches = function () {
@@ -40,7 +65,7 @@ var checkMatches = function () {
     _.each(riders, function (rider) {
 
       // a person cannot give themself a ride
-      if (id(driver.socket) === id(rider.socket)) {
+      if (driver.accountId === rider.accountId) {
         return;
       }
 
@@ -53,14 +78,31 @@ var checkMatches = function () {
           delete drivers[key(driver)];
           delete riders[key(rider)];
 
-          driver.socket.emit('trip:matched');
-          rider.socket.emit('trip:matched');
+          // update list of notifications
+          profiles[driver.accountId].notifications.push({
+            trip: driver.id,
+            message: 'A rider was found for your trip to ' + driver.to,
+            time: Date.now()
+          });
 
+          profiles[rider.accountId].notifications.push({
+            trip: rider.id,
+            message: 'A driver was found for your trip to ' + rider.to,
+            time: Date.now()
+          });
+
+          // send new notifications
+          if (sockets[driver.accountId]) {
+            sockets[driver.accountId].emit('update:notifications', profiles[driver.accountId].notifications);
+          }
+          if (sockets[rider.accountId]) {
+            sockets[rider.accountId].emit('update:notifications', profiles[rider.accountId].notifications);
+          }
 
           driver.match = rider;
           rider.match = driver;
-          driver.route = data.routes[0];
-          rider.route = data.routes[0];
+
+          driver.route = rider.route = data.routes[0];
 
           console.log('matched!');
         } else {
@@ -74,30 +116,41 @@ var checkMatches = function () {
 
 
 var addTrip = function (trip) {
-  if (!trips[id(trip.socket)]) {
-    trips[id(trip.socket)] = [];
+  if (!trips[trip.accountId]) {
+    trips[trip.accountId] = [];
   }
-  trips[id(trip.socket)].push(trip);
+  trips[trip.accountId].push(trip);
 };
 
-var id = function (socket) {
-  return socket.sessionId;
+var serializeTrip = function (trip) {
+  // TODO
 };
 
 module.exports = function (socket) {
   socket.session = socket.handshake.session;
   socket.sessionId = socket.handshake.sessionId;
 
+  socket.on('set:account', function (data) {
+    socket.accountId = data.id;
+
+    if (!profiles[socket.accountId]) {
+      profiles[socket.accountId] = newProfile(data);
+    }
+    sockets[socket.accountId] = socket;
+  });
+
+
+
   socket.on('send:rider:trip', function (data, fn) {
     var newTrip = {
-      socket: socket,
       from: data.from,
       to: data.to,
-      type: 'ride'
+      type: 'ride',
+      accountId: socket.accountId
     };
     newTrip.id = key(newTrip);
 
-    riders[key(newTrip)] = newTrip;
+    riders[newTrip.id] = newTrip;
     addTrip(newTrip);
 
     fn();
@@ -105,8 +158,8 @@ module.exports = function (socket) {
   });
 
   socket.on('send:profile', function (id, fn) {
-    if (profile[id]) {
-      fn(profile[id]);
+    if (profiles[id]) {
+      fn(profiles[id]);
     } else {
       fn(false);
     }
@@ -114,36 +167,72 @@ module.exports = function (socket) {
 
   socket.on('send:driver:trip', function (data, fn) {
     var newTrip = {
-      socket: socket,
       from: data.from,
       to: data.to,
-      type: 'drive'
+      type: 'drive',
+      accountId: socket.accountId
     };
     newTrip.id = key(newTrip);
 
-    drivers[key(newTrip)] = newTrip;
+    drivers[newTrip.id] = newTrip;
     addTrip(newTrip);
 
     fn();
     checkMatches();
   });
 
+  socket.on('cancel:driver:trip', function (data, fn) {
+    var id = data.id;
+
+    // TODO: save this to a person's reliability
+    // notify of <something>
+
+
+
+    fn();
+  });
+
+  socket.on('cancel:trip', function (data, fn) {
+
+    // TODO: save this to a person's reliability
+    // notify of <something>
+
+    var trip = _.find(trips[socket.accountId], function (trip) {
+      return trip.id === data.id;
+    });
+
+    if (trip) {
+      trip.status = 'canceled';
+
+      if (trip.match) {
+
+      }
+    }
+
+    fn();
+  });
+
   socket.on('reverse:geocode', reverseGeocode);
 
   socket.on('get:trips', function (data, fn) {
-    var myTrips = trips[id(socket)] || [];
+    var myTrips = trips[socket.accountId] || [];
     fn(myTrips.map(function (trip) {
       return {
         from: trip.from,
         to: trip.to,
         type: trip.type,
-        id: trip.id
+        id: trip.id,
+        status: trip.status
       };
     }));
   });
 
+  socket.on('get:notifications', function (data, fn) {
+    fn(profiles[socket.accountId].notifications);
+  });
+
   socket.on('get:trip:info', function (data, fn) {
-    var trip = _.find(trips[id(socket)], function (trip) {
+    var trip = _.find(trips[socket.accountId], function (trip) {
       return trip.id === data.id;
     });
 
@@ -153,11 +242,12 @@ module.exports = function (socket) {
         to: trip.to,
         type: trip.type,
         route: trip.route,
-        id: trip.id
+        id: trip.id,
+        status: trip.status
       };
 
       if (trip.match) {
-        serialized.match = id(trip.match.socket);
+        serialized.match = trip.accountId;
       }
 
       fn(serialized);
@@ -168,20 +258,9 @@ module.exports = function (socket) {
   });
 
   // clean up if someone disconnects before being matched
-  /*
   socket.on('disconnect', function () {
-    if (trips[socket.id]) {
-      trips[socket.id].forEach(function (trip) {
-        if (drivers[key(trip)]) {
-          delete drivers[key(trip)];
-        }
-        if (riders[key(trip)]) {
-          delete riders[key(trip)];
-        }
-      });
-
-      delete trips[socket.id];
+    if (sockets[socket.accountId]) {
+      delete sockets[socket.accountId];
     }
   });
-  */
 };
