@@ -26,6 +26,7 @@ var sha1 = function (str) {
 };
 
 var canHitchRide = require('../lib/can-hitch-ride');
+var reverseGeocode = require('../lib/google-maps').reverseGeocode;
 
 var key = function (trip) {
   return sha1(trip.from.toString() + ':' +
@@ -126,6 +127,8 @@ module.exports = function (socket) {
     fn();
     checkMatches();
   });
+
+  socket.on('reverse:geocode', reverseGeocode);
 
   socket.on('get:trips', function (data, fn) {
     var myTrips = trips[id(socket)] || [];
