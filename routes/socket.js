@@ -12,6 +12,12 @@ var drivers = {};
 // map id(socket) -> [ {trip} , {trip} , ... ]
 var trips = {};
 
+// google account id -> account data (reliability, etc.)
+var accounts = {};
+
+// account -> socket
+var sockets = {};
+
 var crypto = require('crypto');
 var sha1 = function (str) {
   var shasum = crypto.createHash('sha1');
@@ -95,6 +101,14 @@ module.exports = function (socket) {
 
     fn();
     checkMatches();
+  });
+
+  socket.on('send:profile', function (id, fn) {
+    if (profile[id]) {
+      fn(profile[id]);
+    } else {
+      fn(false);
+    }
   });
 
   socket.on('send:driver:trip', function (data, fn) {
