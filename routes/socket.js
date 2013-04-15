@@ -113,6 +113,9 @@ var checkMatches = function () {
           driver.status = 'matched';
           rider.status = 'matched';
 
+          // whatever
+          rider.depart = driver.depart;
+
           driver.route = rider.route = data.routes[0];
 
           console.log('matched!');
@@ -193,7 +196,8 @@ module.exports = function (socket) {
       to: data.to,
       type: 'drive',
       accountId: socket.accountId,
-      status: 'open'
+      status: 'open',
+      depart: data.earliest
     };
     newTrip.id = key(newTrip);
 
@@ -314,7 +318,8 @@ module.exports = function (socket) {
         to: trip.to,
         type: trip.type,
         id: trip.id,
-        status: trip.status
+        status: trip.status,
+        depart: trip.depart
       };
     }));
   });
@@ -327,7 +332,8 @@ module.exports = function (socket) {
         to: trip.to,
         type: trip.type,
         id: trip.id,
-        status: trip.status
+        status: trip.status,
+        depart: trip.depart
       };
     }));
   });
@@ -354,7 +360,8 @@ module.exports = function (socket) {
         type: trip.type,
         route: trip.route,
         id: trip.id,
-        status: trip.status
+        status: trip.status,
+        depart: trip.depart
       };
 
       if (trip.match) {
@@ -382,11 +389,15 @@ module.exports = function (socket) {
         type: trip.type,
         route: trip.route,
         id: trip.id,
-        status: trip.status
+        status: trip.status,
+        depart: trip.depart
       };
 
       if (trip.match) {
-        serialized.match = trip.match.accountId;
+        serialized.match = {
+          name: profiles[trip.match.accountId].name,
+          picture: profiles[trip.match.accountId].picture
+        };
       }
 
       fn(serialized);
