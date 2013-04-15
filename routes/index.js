@@ -15,7 +15,7 @@ exports.appIndex = function (req, res) {
     function (err, html) {
 
       if (!req.query.gap) {
-        html = html
+        html = html.toString()
           .replace(new RegExp("<!-- start phonegap -->[\\s\\S]*?<!-- end phonegap -->", "g"), '')
           .replace(new RegExp("<!-- start web", "g"), '')
           .replace(new RegExp("end web -->", "g"), '');
