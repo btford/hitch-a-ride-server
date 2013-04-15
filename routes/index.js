@@ -13,7 +13,16 @@ exports.appIndex = function (req, res) {
   fs.readFile(__dirname + '/../node_modules/hitch-a-ride-client/app/index.html',
     { encoding: 'utf8' },
     function (err, html) {
+
+      if (!req.query.gap) {
+        html = html
+          .replace(new RegExp("<!-- start phonegap -->[\\s\\S]*?<!-- end phonegap -->", "g"), '')
+          .replace(new RegExp("<!-- start web", "g"), '')
+          .replace(new RegExp("end web -->", "g"), '');
+      }
+
       res.write(html);
+
       res.end();
     });
 };

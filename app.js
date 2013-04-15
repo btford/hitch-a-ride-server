@@ -83,6 +83,13 @@ app.configure(function(){
   });
 
   // serve the web app
+  app.use(function (req, res, next) {
+    if (req.path === '/app/') {
+      routes.appIndex(req, res);
+    } else {
+      next();
+    }
+  });
   app.use('/app', express.static(__dirname + '/node_modules/hitch-a-ride-client/app'));
   app.use(app.router);
 });
@@ -95,29 +102,16 @@ app.configure('production', function(){
   app.use(express.errorHandler());
 });
 
-function ensureAuth(req, res, next){
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.redirect('/auth/google');
-}
 // Routes
 app.get('/', routes.index);
 /*app.get('/app', function(req, res){
   res.render(__dirname + '/node_modules/hitch-a-ride-client/app/index.html');     
 });*/
 app.get('/app/*', routes.appIndex);
+app.get('/app/*', routes.appIndex);
 app.get('/partials/:name', routes.partials);
-app.get('/auth/google',
-  passport.authenticate('google', { failureRedirect: '/'}),
-  function(req, res) {
-    res.redirect('/app');
-  });
-app.get('/auth/google/return',
-  passport.authenticate('google', {failureRedirect: '/'}),
-  function(req, res){
-    res.redirect('/app');
-  });
+
+
 // redirect all others to the index (HTML5 history)
 app.get('*', routes.index);
 
