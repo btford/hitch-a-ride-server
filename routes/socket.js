@@ -98,14 +98,20 @@ var checkMatches = function () {
 
           // send new notifications
           if (sockets[driver.accountId]) {
-            sockets[driver.accountId].emit('update:notifications', profiles[driver.accountId].notifications);
+            try {
+              sockets[driver.accountId].emit('update:notifications', profiles[driver.accountId].notifications);
+            } catch(e) {}
           }
           if (sockets[rider.accountId]) {
-            sockets[rider.accountId].emit('update:notifications', profiles[rider.accountId].notifications);
+            try {
+              sockets[rider.accountId].emit('update:notifications', profiles[rider.accountId].notifications);
+            } catch(e) {}
           }
 
           driver.match = rider;
           rider.match = driver;
+          driver.status = 'matched';
+          rider.status = 'matched';
 
           driver.route = rider.route = data.routes[0];
 
@@ -232,6 +238,34 @@ module.exports = function (socket) {
   });
 
 
+  socket.on('finish:trip', function (data, fn) {
+
+    var trip = _.find(trips[socket.accountId], function (trip) {
+      return trip.id === data.id;
+    });
+    if (!trip) {
+      return;
+    }
+    trip.status = data.status;
+
+    trips[trip.accountId].splice(trips[trip.accountId].indexOf(trip), 1);
+    history[trip.accountId].push(trip);
+    /*
+    success: 0,
+    late: 0,
+    cancelled: 0,
+    noshow: 0
+    */
+    try {
+      profiles[trip.match.accountId].stats[data.status] += 1;
+    } catch (e) {
+      console.log(e.stack);
+    }
+
+    fn();
+  });
+
+
   socket.on('cancel:rider:trip', function (data, fn) {
 
     var trip = _.find(trips[socket.accountId], function (trip) {
@@ -300,7 +334,9 @@ module.exports = function (socket) {
 
   socket.on('get:notifications', function (data, fn) {
     if (socket.accountId) {
-      sockets[socket.accountId].emit('update:notifications', profiles[socket.accountId].notifications);
+      try {
+        sockets[socket.accountId].emit('update:notifications', profiles[socket.accountId].notifications);
+      } catch (e) {}
     } else {
       fn([]);
     }
@@ -322,7 +358,10 @@ module.exports = function (socket) {
       };
 
       if (trip.match) {
-        serialized.match = trip.accountId;
+        serialized.match = {
+          name: profiles[trip.match.accountId].name,
+          picture: profiles[trip.match.accountId].picture
+        };
       }
 
       fn(serialized);
