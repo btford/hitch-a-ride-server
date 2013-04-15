@@ -113,11 +113,16 @@ var checkMatches = function () {
           driver.status = 'matched';
           rider.status = 'matched';
 
+          console.log(rider.depart);
           // whatever
-          var riderDepart = new Date(Date.parse(rider.depart.date + ' ' + rider.depart.time) + data.routes[0].legs[0].duration.value);
+          var riderDepart = new Date(
+            Date.parse(rider.depart.date +
+              ' ' +
+              rider.depart.time) +
+            1000*data.routes[0].legs[0].duration.value);
           rider.depart = {
             date: (riderDepart.getMonth()+1) + '/' + (riderDepart.getDate()) + '/' + riderDepart.getUTCFullYear(),
-            time: (riderDepart.getHours() + riderDepart.getMinutes())
+            time: (riderDepart.getHours()+1) + ':' + (riderDepart.getMinutes()<10?'0':'') + riderDepart.getMinutes()
           };
 
           driver.route = rider.route = data.routes[0];
@@ -170,7 +175,8 @@ module.exports = function (socket) {
       to: data.to,
       type: 'ride',
       accountId: socket.accountId,
-      status: 'open'
+      status: 'open',
+      depart: data.earliest
     };
     newTrip.id = key(newTrip);
 
