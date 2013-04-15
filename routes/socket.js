@@ -114,7 +114,11 @@ var checkMatches = function () {
           rider.status = 'matched';
 
           // whatever
-          rider.depart = driver.depart;
+          var riderDepart = new Date(Date.parse(rider.depart.date + ' ' + rider.depart.time) + data.routes[0].legs[0].duration.value);
+          rider.depart = {
+            date: (riderDepart.getMonth()+1) + '/' + (riderDepart.getDate()) + '/' + riderDepart.getUTCFullYear(),
+            time: (riderDepart.getHours() + riderDepart.getMinutes())
+          };
 
           driver.route = rider.route = data.routes[0];
 
